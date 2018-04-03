@@ -6,7 +6,7 @@ import PropTypes from 'expose-loader?PropTypes!prop-types'
 import ReactBootstrap from 'expose-loader?ReactBootstrap!react-bootstrap'
 import { Provider } from 'react-redux'
 
-import store from './store'
+import store from 'expose-loader?BotpressReduxStore!./store'
 
 require('bootstrap/dist/css/bootstrap.css')
 require('storm-react-diagrams/dist/style.min.css')

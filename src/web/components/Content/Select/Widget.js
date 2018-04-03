@@ -1,7 +1,8 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
+import { InputGroup, FormControl, Glyphicon } from 'react-bootstrap'
 
-import { upsertContentItem } from '~/actions'
+import { upsertContentItem, fetchContentItem } from '~/actions'
 
 import CreateOrEditModal from '../CreateOrEditModal'
 const style = require('./style.scss')
@@ -10,6 +11,13 @@ class ContentPickerWidget extends Component {
   state = {
     showItemEdit: false,
     contentToEdit: null
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (this.props.contentItem) {
+      return
+    }
+    this.props.fetchContentItem(nextProps.itemId)
   }
 
   editItem = () => {
@@ -23,63 +31,49 @@ class ContentPickerWidget extends Component {
     this.props
       .upsertContentItem({ modifyId: itemId, categoryId, formData: this.state.contentToEdit })
       .then(() => this.setState({ showItemEdit: false, contentToEdit: null }))
-      .then(this.props.onUpdate)
+      .then(() => this.props.fetchContentItem(this.props.itemId))
+      .then(this.props.onUpdate || (() => {}))
   }
 
-  handleFormEdited = data => {
-    this.setState({ contentToEdit: data })
+  onChange = item => {
+    this.props.fetchContentItem(item && item.id)
+    this.props.onChange(item)
   }
 
   render() {
-    const { inputId, contentItem, categoryId, onChange, placeholder } = this.props
+    const { inputId, contentItem, categoryId, placeholder } = this.props
 
     const schema = (contentItem && contentItem.categorySchema) || { json: {}, ui: {} }
     const textContent = (contentItem && `${contentItem.categoryTitle} | ${contentItem.previewText}`) || ''
 
     return (
-      <div className="input-group">
-        <input
-          type="text"
-          placeholder={placeholder}
-          value={textContent}
-          disabled
-          className="form-control"
-          id={inputId || ''}
-        />
-        <span className="input-group-btn">
-          <button
-            className={`btn btn-default ${style.editButton}`}
-            disabled={!contentItem}
-            type="button"
-            onClick={this.editItem}
-          >
-            Edit...
-          </button>
-        </span>
-
+      <InputGroup>
+        <FormControl placeholder={placeholder} value={textContent} disabled id={inputId || ''} />
+        <InputGroup.Addon>
+          {contentItem && (
+            <a onClick={this.editItem}>
+              <Glyphicon glyph="pencil" />
+            </a>
+          )}
+          <a onClick={() => window.botpress.pickContent({ categoryId }, this.onChange)} style={{ marginLeft: '10px' }}>
+            <Glyphicon glyph="folder-open" />
+          </a>
+        </InputGroup.Addon>
         <CreateOrEditModal
           show={this.state.showItemEdit}
           schema={schema.json}
           uiSchema={schema.ui}
           handleClose={() => this.setState({ showItemEdit: false, contentToEdit: null })}
           formData={this.state.contentToEdit}
-          handleEdit={this.handleFormEdited}
+          handleEdit={contentToEdit => this.setState({ contentToEdit })}
           handleCreateOrUpdate={this.handleUpdate}
         />
-        <span className="input-group-btn">
-          <button
-            className="btn btn-default"
-            type="button"
-            onClick={() => window.botpress.pickContent({ categoryId }, onChange)}
-          >
-            Pick Content...
-          </button>
-        </span>
-      </div>
+      </InputGroup>
     )
   }
 }
 
-const mapDispatchToProps = { upsertContentItem }
+const mapDispatchToProps = { upsertContentItem, fetchContentItem }
+const mapStateToProps = ({ content: { itemsById } }, { itemId }) => ({ contentItem: itemsById[itemId] })
 
-export default connect(null, mapDispatchToProps)(ContentPickerWidget)
+export default connect(mapStateToProps, mapDispatchToProps)(ContentPickerWidget)

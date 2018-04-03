@@ -275,7 +275,13 @@ class SelectContent extends Component {
     const schema = (newItemCategory || {}).schema || { json: {}, ui: {} }
 
     return (
-      <Modal animation={false} show={show} onHide={this.onClose} container={this.props.container}>
+      <Modal
+        animation={false}
+        show={show}
+        onHide={this.onClose}
+        container={this.props.container}
+        style={{ zIndex: 1051 }}
+      >
         <Modal.Header closeButton>
           <Modal.Title>Pick Content</Modal.Title>
         </Modal.Header>
